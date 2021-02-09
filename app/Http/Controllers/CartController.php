@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Transformers\CartItem;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
     public function index()
     {
 
-        $data['products'] = auth()->user()->products()->get();
+        $cartItems = auth()->user()->products()->get();
+
+        $data['data'] = json_encode(fractal($cartItems, new CartItem())->toArray()['data']);
+        $data['total'] = $cartItems->map(function($item) {
+            return $item->qty * $item->product->price;
+        })->sum();
 
         return view('cart', $data);
     }
@@ -21,13 +27,26 @@ class CartController extends Controller
 
         $products = $user->products()->get();
 
-        // create order
-        $order = $user->orders()->create();
+        DB::beginTransaction();
+        try {
+            // update product stock
+            foreach ($products as $userProduct) {
+                $userProduct->product->updateStock($userProduct->qty);
+            }
 
-        $order->products()->attach($products);
+            // create order and attach products
+            $order = $user->orders()->create();
+            $order->products()->attach($products);
 
-        // clear cart
-        $user->products()->delete();
+            // clear cart
+            $user->products()->delete();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+
+        DB::commit();
 
         return response()->json(['message' => 'products-has-been-checked-out'], 200);
 

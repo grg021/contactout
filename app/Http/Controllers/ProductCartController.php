@@ -10,14 +10,23 @@ class ProductCartController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id' => 'required'
+            'id' => 'required|exists:products'
         ]);
 
         $user = auth()->user();
 
-        $product = Product::findOrFail($request->id);
+        $userProduct = $user->products()->firstOrCreate([
+            'product_id' => $request->id
+        ], [ 'qty' => 0 ]);
 
-        $user->products()->attach($product);
+        try {
+            $userProduct->qty = $userProduct->qty + 1;
+            $userProduct->save();
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+
+
 
         return response()->json(['message' => 'added-to-cart'], 200);
 

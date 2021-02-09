@@ -17,7 +17,7 @@ class CreateProductCartTable extends Migration
             $table->id();
             $table->foreignId('product_id');
             $table->foreignId('user_id');
-            $table->integer('qty')->default(1);
+            $table->integer('qty')->default(0);
         });
     }
 

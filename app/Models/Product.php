@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\OutOfStock;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,6 +11,8 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = ['name', 'description', 'stock', 'price'];
+
+    protected $appends = ['price_in_usd'];
 
     public function carts()
     {
@@ -23,7 +26,19 @@ class Product extends Model
 
     public function getPriceInUsdAttribute()
     {
-        return '$' . $this->price / 100;
+        return to_usd($this->price);
+    }
+
+    public function updateStock(int $qty)
+    {
+
+        if($this->stock < $qty) {
+            throw new OutOfStock();
+        }
+
+        $this->update([
+            'stock' => $this->stock - $qty
+        ]);
     }
 
 }

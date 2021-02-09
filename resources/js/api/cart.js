@@ -16,3 +16,11 @@ export function checkoutCart()
         method: 'post'
     })
 }
+
+export function removeItem(id)
+{
+    return request({
+        url: '/api/cart_items/' + id,
+        method: 'delete'
+    })
+}
