@@ -21,4 +21,9 @@ class Product extends Model
         return $this->belongsToMany(Order::class);
     }
 
+    public function getPriceInUsdAttribute()
+    {
+        return '$' . $this->price / 100;
+    }
+
 }

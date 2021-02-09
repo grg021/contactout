@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\ProductCartController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,8 +20,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+
+
+Route::middleware('auth')->group(function() {
+    Route::get('/dashboard', [StoreController::class, 'index'])->name('dashboard');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart');
+    Route::post('/api/cart', [ProductCartController::class, 'store']);
+    Route::post('/api/cart/checkout', [CartController::class, 'checkout']);
+});
 
 require __DIR__.'/auth.php';
+
+Route::get('/{any?}', App\Http\Controllers\PagesController::class);
